@@ -8,7 +8,7 @@ Author: Andreas Spuling
 Author URI: 
 */
 
-    include('lib/api.php');
+    include('lib/XIVPads-LodestoneAPI/_old/API.php');
     define(TABLE_NAME,'ffxiv_fc_roster');
     
     // function to create the DB / Options / Defaults					

@@ -1,0 +1,3 @@
+[submodule "lib/XIVPads-LodestoneAPI"]
+	path = lib/XIVPads-LodestoneAPI
+	url = git@github.com:viion/XIVPads-LodestoneAPI.git
