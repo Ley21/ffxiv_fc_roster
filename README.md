@@ -18,7 +18,7 @@ To use the roster write on a post/page following tag.
 ```
 
 ### Sample of a row:
-![Sample of Roster](https://github.com/Ley21/ffxiv_fc_roster/blob/master/sample/sample_1.PNG)
+![Sample of Roster](https://github.com/Ley21/ffxiv_fc_roster/blob/master/sample/sample_2.png)
 
 
 This is [on GitHub](https://github.com/Ley21/ffxiv_fc_roster) so let me know if I've b0rked it somewhere.
