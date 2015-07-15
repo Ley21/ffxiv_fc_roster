@@ -8,7 +8,6 @@ Author: Andreas Spuling
 Author URI: 
 */
 
-    include('lib/XIVPads-LodestoneAPI/_old/API.php');
     define(TABLE_NAME,'ffxiv_fc_roster');
     
     // function to create the DB / Options / Defaults					
@@ -21,14 +20,17 @@ Author URI:
             `avatar_url` tinytext,
             `rank` tinytext,
             `gladiator` tinyint(2) NOT NULL DEFAULT '0',
-            `pugilist` tinyint(2) NOT NULL DEFAULT '0',
             `marauder` tinyint(2) NOT NULL DEFAULT '0',
+            `darkknight` tinyint(2) NOT NULL DEFAULT '0',
+            `pugilist` tinyint(2) NOT NULL DEFAULT '0',
             `lancer` tinyint(2) NOT NULL DEFAULT '0',
+            'rogue` tinyint(4) NOT NULL DEFAULT '0',
             `archer` tinyint(2) NOT NULL DEFAULT '0',
-            `rogue` tinyint(4) NOT NULL DEFAULT '0',
-            `conjurer` tinyint(2) NOT NULL DEFAULT '0',
+            `machinist` tinyint(2) NOT NULL DEFAULT '0',
             `thaumaturge` tinyint(2) NOT NULL DEFAULT '0',
             `arcanist` tinyint(2) NOT NULL DEFAULT '0',
+            `conjurer` tinyint(2) NOT NULL DEFAULT '0',
+            `astrologian` tinyint(2) NOT NULL DEFAULT '0',
             `carpenter` tinyint(2) NOT NULL DEFAULT '0',
             `blacksmith` tinyint(2) NOT NULL DEFAULT '0',
             `armorer` tinyint(2) NOT NULL DEFAULT '0',
@@ -75,17 +77,13 @@ Author URI:
     function ffxiv_roster_update_charakters(){
         global $wpdb;
         $fcId = get_option('ffroster_fcid','');
-        $api = new LodestoneAPI();
-        $freeCompany = $api->getFC(
-        [
-        	"id" => "$fcId"
-        ],
-        [
-            "members"   => true,
-        ]);
+        require 'lib/XIVPads-LodestoneAPI/api-autoloader.php';
+        $api = new Viion\Lodestone\LodestoneAPI();
+        $freeCompany = $api->Search->FreeCompany($fcId,true);
+        
         if ( $freeCompany != NULL )
         {
-            $members = $freeCompany->getMembers();
+            $members = $freeCompany->members;
             $membersById = array();
         	foreach( $members as $member ){
         	    $membersById[$member['id']] = $member;
@@ -101,27 +99,21 @@ Author URI:
             
             //Compare ids and insert/update missing ones
             foreach($membersById as $id=>$member){
-                $api->parseProfile( $id );
-        		$character = $api->getCharacterByID( $id );
-        		$name = $character->getName();
+                $character = $api->Search->Character( $id );
+        		$rank = "<img src='".$member["rank"]["icon"]."' title='".$member["rank"]["title"]."'/>";
         		
-        		$rank = "<img src='".$member["rank"]["image"]."' title='".$member["rank"]["title"]."'/>";
-        		$classJobs = $character->getClassJobsOrdered("numbered");
-        	
-        		$avatar = $character->getAvatar( 50 );
         		
         		$sql = array();
         		$sql["id"] = $id;
-        		$sql["name"] = "$name";
+        		$sql["name"] = "$character->name";
         		$sql["rank"] = "$rank";
-        		$sql["avatar_url"] = "$avatar";
+        		$sql["avatar_url"] = "$character->avatar";
         		
-        		foreach($classJobs as $classJob){
-        		    $class = $classJob["class"];
-        		    $level = $classJob["level"];
-        		    $sql[$class] = $level;
+        		foreach($character->classjobs as $classJob){
+        		    
+        		    $class = str_replace(" ","",strtolower( $classJob['name']));
+        		    $sql[$class] = $classJob['level'];
         		}
-        		
         		
         		if(in_array($id,$storedIds)){
                     $wpdb->update( $wpdb->prefix.TABLE_NAME, $sql,['id'=> $id]);
@@ -129,9 +121,11 @@ Author URI:
                 else{
                     $wpdb->insert( $wpdb->prefix.TABLE_NAME, $sql );
                 }
+                
             }
             
         }
+        spl_autoload_unregister(array(__CLASS__, 'autoload'));
     }
 
     function ffxiv_roster_callback( $atts ){
