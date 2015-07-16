@@ -9,6 +9,7 @@ Author URI:
 */
 
     define(TABLE_NAME,'ffxiv_fc_roster');
+    define(RANK_TABLE_NAME,'ffxiv_fc_rank');
     
     // function to create the DB / Options / Defaults					
     function plugin_options_install() {
@@ -18,7 +19,7 @@ Author URI:
     		`id` int(10) NOT NULL DEFAULT '0',
     		`name` varchar(100) NOT NULL,
             `avatar_url` tinytext,
-            `rank` tinytext,
+            `rank` varchar(255) NOT NULL,
             `gladiator` tinyint(2) NOT NULL DEFAULT '0',
             `marauder` tinyint(2) NOT NULL DEFAULT '0',
             `darkknight` tinyint(2) NOT NULL DEFAULT '0',
@@ -42,11 +43,19 @@ Author URI:
             `miner` tinyint(2) NOT NULL DEFAULT '0',
             `botanist` tinyint(2) NOT NULL DEFAULT '0',
             `fisher` tinyint(2) NOT NULL DEFAULT '0',
-            PRIMARY KEY  (`id`)
+            PRIMARY KEY  (`id`),
+            FOREIGN KEY (`id`) REFERENCES ".$wpdb->prefix.RANK_TABLE_NAME."('rank_icon')
     		);";
     		
+    	$rank_sql = "CREATE TABLE " . $wpdb->prefix.RANK_TABLE_NAME . " (
+            `rank_icon` varchar(255) NOT NULL,    				
+    		`order` int(10) NOT NULL,
+    		`title` varchar(100) NOT NULL,
+            PRIMARY KEY  (`rank_icon`)
+    		);";
      
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($rank_sql);
 		dbDelta($sql);
      
     }
@@ -57,6 +66,20 @@ Author URI:
     
     function ffxiv_roster_display_settings(){
         $fcId = get_option('ffroster_fcid','');
+        global $wpdb;
+        $ranks = $wpdb->get_results('SELECT * FROM '.$wpdb->prefix.RANK_TABLE_NAME);
+        $htmlRanks = "<tr><td><b>Ranks</b></td></tr>";
+        $ranksInput = "";
+        foreach($ranks as $rank){
+            $shortTitle = str_replace(" ","",strtolower($rank->title));
+            $optionName = 'ffroster_fcrank_'.$shortTitle;
+            $order = get_option($optionName,'');
+            echo $order;
+            $htmlRanks .= '<tr><td><label>'.$rank->title.' '.$rank->rank_icon.
+                ': </label><input type="text" size="2" name="'.$optionName.'" value="'.$order.'"/></td><tr>';
+            $ranksInput .= '<input type="hidden" name="page_options" value="'.$optionName.'" />';
+            
+        }
         $html = '<form action="options.php" method="post" name="options">
                 <h2>Adjust your settings</h2>
                 ' . wp_nonce_field('update-options') . '
@@ -73,6 +96,15 @@ Author URI:
                 <input type="submit" name="Submit" value="Update" /></form>';
         echo $html;
     }
+    
+    function in_objectArray($needle,$array,$elem){
+        foreach($array as $obj){
+            if($obj->$elem == $needle){
+                return true;
+            }
+        }
+        return false;
+    }
 
     function ffxiv_roster_update_charakters(){
         global $wpdb;
@@ -88,6 +120,7 @@ Author URI:
         	foreach( $members as $member ){
         	    $membersById[$member['id']] = $member;
         	}
+        	$ranks = $wpdb->get_results('SELECT * FROM '.$wpdb->prefix.RANK_TABLE_NAME);
             $storedIds = $wpdb->get_col('SELECT id From '.$wpdb->prefix.TABLE_NAME);
             
             //Delete members
@@ -100,8 +133,20 @@ Author URI:
             //Compare ids and insert/update missing ones
             foreach($membersById as $id=>$member){
                 $character = $api->Search->Character( $id );
-        		$rank = "<img src='".$member["rank"]["icon"]."' title='".$member["rank"]["title"]."'/>";
+        		$rankTitel = $member["rank"]["title"];
+        		$rank = "<img src='".$member["rank"]["icon"]."' title='$rankTitel'/>";
         		
+        		$rank_sql = array();
+        		$rank_sql["rank_icon"] = "$rank";
+        		$rank_sql["title"] = "$rankTitel";
+        		
+        		if(in_objectArray($rank,$ranks,'rank_icon')){
+        		    //echo "update";
+        		    $wpdb->update( $wpdb->prefix.RANK_TABLE_NAME, $rank_sql,['rank_icon'=> $rank]);
+        		}else{
+        		    //echo "insert";
+        		    $wpdb->insert( $wpdb->prefix.RANK_TABLE_NAME, $rank_sql );
+        		}
         		
         		$sql = array();
         		$sql["id"] = $id;
@@ -121,7 +166,7 @@ Author URI:
                 else{
                     $wpdb->insert( $wpdb->prefix.TABLE_NAME, $sql );
                 }
-                
+                //break;
             }
             
         }
@@ -129,6 +174,7 @@ Author URI:
     }
 
     function ffxiv_roster_callback( $atts ){
+        //ffxiv_roster_update_charakters();
         global $wpdb;
         $members = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix.TABLE_NAME." ORDER BY rank");
         echo "<table><thead><tr><th>Name</th><th>Rank</th>";
