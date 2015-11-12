@@ -60,6 +60,7 @@ Author URI:
     
     function ffxiv_roster_display_settings(){
         $fcId = get_option('ffroster_fcid','');
+        $onlyDow = get_option('ffroster_only_dow','false');
         global $wpdb;
         $html = '<form action="options.php" method="post" name="options">
                 <h2>Adjust your settings</h2>
@@ -70,10 +71,19 @@ Author URI:
                         <td scope="row" align="left">
                         <label>Free Company Id: </label><input type="text" name="ffroster_fcid" value="'.$fcId.'"/></td>
                         </tr>
+                        <tr>
+                        <td scope="row" align="left">
+                        <label>Only Disciplin of War: </label>
+                        <select name="ffroster_only_dow">
+                            <option value="true" '.($onlyDow == 'true' ? 'selected' : '').'>True</option>
+                            <option value="false" '.($onlyDow == 'false' ? 'selected' : '').'>False</option>
+                        </select>
+                        </tr>
                     </tbody>
                 </table>
                 <input type="hidden" name="action" value="update" />
                 <input type="hidden" name="page_options" value="ffroster_fcid" />
+                <input type="hidden" name="page_options" value="ffroster_only_dow" />
                 <input type="submit" name="Submit" value="Update" /></form>';
         echo $html;
     }
@@ -83,6 +93,7 @@ Author URI:
     function ffxiv_roster_update_charakters(){
         global $wpdb;
         $fcId = get_option('ffroster_fcid','');
+        
         require 'lib/XIVPads-LodestoneAPI/api-autoloader.php';
         $api = new Viion\Lodestone\LodestoneAPI();
         $freeCompany = $api->Search->FreeCompany($fcId,true);
@@ -147,37 +158,46 @@ Author URI:
 
     function ffxiv_roster_callback( $atts ){
         global $wpdb;
+        $onlyDow = get_option('ffroster_only_dow','false') == "false" 
+            ? false : true;
+        
         $members = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix.TABLE_NAME." ORDER BY rank_order");
-        echo "<table><thead><tr><th>Name</th><th>Rank</th>";
+        echo "<center><table class='table table-bordered'><thead><tr><th>Name</th><th>Rank</th>";
         
         foreach($members[0] as $key=>$value){
+            if($key == "carpenter" && $onlyDow){
+                break;
+            }
             if($key == "id" || $key == "name" || $key == "avatar_url" || $key == "rank_icon" || $key == "rank_order"){
                 continue;
             }
             else{
                 $imagePath = plugins_url( "img/$key.png", __FILE__ );
-                echo "<th><img src=$imagePath></th>";
+                echo "<th style='padding: 5px'><img src=$imagePath></th>";
             }
         }
         echo "</tr></thead><tbody>";
         
         foreach($members as $member){
             $nameCell = "<td width='20%' title='$member->name' style='text-align: left;'>
-                <img class='members' src='$member->avatar_url'/> 
+                <img style='height: 50px' class='members' src='$member->avatar_url'/> <br/>
                 <a href=http://eu.finalfantasyxiv.com/lodestone/character/$member->id/ target=_blank>$member->name</a></td>";
             $rank = $member->rank_icon;
-            echo "<tr>$nameCell<td>$rank</td>";
+            echo "<tr><center>$nameCell</center><td><center>$rank</center></td>";
             foreach($member as $key=>$value){
+                if($key == "carpenter" && $onlyDow){
+                    break;
+                }
                 if($key == "id" || $key == "name" || $key == "avatar_url" || $key == "rank_icon" || $key == "rank_order"){
                     continue;
                 }
                 else{
-                    echo "<td>$value</td>";
+                    echo "<td><center>$value</center></td>";
                 }
             }
             echo "</tr>"; 
         }
-        echo "</tbody></table>";
+        echo "</tbody></table></center>";
         
     }
     
