@@ -26,7 +26,7 @@ Author URI:
             `darkknight` tinyint(2) NOT NULL DEFAULT '0',
             `pugilist` tinyint(2) NOT NULL DEFAULT '0',
             `lancer` tinyint(2) NOT NULL DEFAULT '0',
-            'rogue` tinyint(4) NOT NULL DEFAULT '0',
+            `rogue` tinyint(4) NOT NULL DEFAULT '0',
             `archer` tinyint(2) NOT NULL DEFAULT '0',
             `machinist` tinyint(2) NOT NULL DEFAULT '0',
             `thaumaturge` tinyint(2) NOT NULL DEFAULT '0',
