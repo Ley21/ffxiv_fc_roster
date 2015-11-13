@@ -61,6 +61,7 @@ Author URI:
     function ffxiv_roster_display_settings(){
         $fcId = get_option('ffroster_fcid','');
         $onlyDow = get_option('ffroster_only_dow','false');
+        $location = get_option('ffroster_location','eu');
         global $wpdb;
         $html = '<form action="options.php" method="post" name="options">
                 <h2>Adjust your settings</h2>
@@ -79,11 +80,23 @@ Author URI:
                             <option value="false" '.($onlyDow == 'false' ? 'selected' : '').'>False</option>
                         </select>
                         </tr>
+                        <tr>
+                        <td scope="row" align="left">
+                        <label>Location: </label>
+                        <select name="ffroster_location">
+                            <option value="eu" '.($location == 'eu' ? 'selected' : '').'>EU</option>
+                            <option value="de" '.($location == 'de' ? 'selected' : '').'>DE</option>
+                            <option value="fr" '.($location == 'fr' ? 'selected' : '').'>FR</option>
+                            <option value="na" '.($location == 'na' ? 'selected' : '').'>NA</option>
+                            <option value="jp" '.($location == 'jp' ? 'selected' : '').'>JP</option>
+                        </select>
+                        </tr>
                     </tbody>
                 </table>
                 <input type="hidden" name="action" value="update" />
                 <input type="hidden" name="page_options" value="ffroster_fcid" />
                 <input type="hidden" name="page_options" value="ffroster_only_dow" />
+                <input type="hidden" name="page_options" value="ffroster_location" />
                 <input type="submit" name="Submit" value="Update" /></form>';
         echo $html;
     }
@@ -160,7 +173,7 @@ Author URI:
         global $wpdb;
         $onlyDow = get_option('ffroster_only_dow','false') == "false" 
             ? false : true;
-        
+        $location = get_option('ffroster_location','eu');
         $members = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix.TABLE_NAME." ORDER BY rank_order");
         echo "<center><table class='table table-bordered'><thead><tr><th>Name</th><th>Rank</th>";
         
@@ -180,8 +193,9 @@ Author URI:
         
         foreach($members as $member){
             $nameCell = "<td width='20%' title='$member->name' style='text-align: left;'>
+                <a href=http://$location.finalfantasyxiv.com/lodestone/character/$member->id/ target=_blank>
                 <img style='height: 50px' class='members' src='$member->avatar_url'/> <br/>
-                <a href=http://eu.finalfantasyxiv.com/lodestone/character/$member->id/ target=_blank>$member->name</a></td>";
+                $member->name</a></td>";
             $rank = $member->rank_icon;
             echo "<tr><center>$nameCell</center><td><center>$rank</center></td>";
             foreach($member as $key=>$value){
