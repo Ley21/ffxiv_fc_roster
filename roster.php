@@ -3,9 +3,14 @@
 Plugin Name: Final Fantasy XIV: ARR - FC Roster
 Plugin URI: 
 Description: This plugin will fetch the charakter profiles of all FC Members and show them in a table.
-Version: 0.1
+Version: 1.0
 Author: Andreas Spuling
 Author URI: 
+License: GPL2
+
+Final Fantasy XIV: ARR - FC Roster is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+
 */
 
     define(TABLE_NAME,'ffxiv_fc_roster');
